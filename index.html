@@ -2,160 +2,133 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Notes App</title>
   <link rel="manifest" href="manifest.json">
-  <meta name="theme-color" content="#2563eb">
-
   <style>
-    * { box-sizing: border-box; }
     body {
-      font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
-      background: #f3f4f6;
       margin: 0;
-      padding: 20px;
+      font-family: system-ui, sans-serif;
+      background: #f8f9fa;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      min-height: 100vh;
     }
+
     .container {
-      max-width: 700px;
-      margin: auto;
-      background: #fff;
-      padding: 25px;
-      border-radius: 12px;
-      box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+      width: 100%;
+      max-width: 600px;
+      padding: 1rem;
     }
-    h1 { text-align: center; margin-bottom: 20px; color: #111827; }
+
+    h1 {
+      text-align: center;
+      margin-bottom: 1rem;
+      color: #333;
+    }
+
     textarea {
-      width: 100%; height: 100px;
-      padding: 10px; border: 1px solid #d1d5db;
-      border-radius: 8px; resize: none;
-      margin-bottom: 10px; font-size: 14px;
-    }
-    input[type="file"] { margin: 10px 0; }
-    button {
-      background: #2563eb; color: white;
-      border: none; padding: 10px 15px;
-      border-radius: 8px; cursor: pointer;
-      transition: background 0.2s; font-size: 14px;
-    }
-    button:hover { background: #1e40af; }
-    .note {
-      background: #f9fafb; border: 1px solid #e5e7eb;
-      padding: 15px; margin-bottom: 15px;
-      border-radius: 10px;
-      box-shadow: 0 2px 5px rgba(0,0,0,0.05);
-    }
-    .note-text {
-      font-size: 15px; color: #111827;
-      margin-bottom: 8px; white-space: pre-wrap;
-    }
-    .note-file { margin-top: 10px; }
-    .note-actions button {
-      background: #6b7280; font-size: 12px;
-      margin-right: 5px; padding: 5px 10px;
-    }
-    .note-actions button:hover { background: #374151; }
-    iframe, object, img {
-      margin-top: 10px;
-      max-width: 100%;
-      border: 1px solid #d1d5db;
+      width: 100%;
+      min-height: 120px;
+      resize: vertical;
+      padding: 0.75rem;
+      border: 1px solid #ccc;
       border-radius: 8px;
+      font-size: 1rem;
+      margin-bottom: 1rem;
     }
-    iframe, object { height: 300px; width: 100%; }
-    img { max-height: 300px; display: block; }
+
+    input[type="file"] {
+      display: block;
+      width: 100%;
+      margin-bottom: 1rem;
+    }
+
+    button {
+      width: 100%;
+      padding: 0.75rem;
+      font-size: 1rem;
+      border: none;
+      border-radius: 8px;
+      background: #007bff;
+      color: white;
+      cursor: pointer;
+    }
+    button:hover {
+      background: #0056b3;
+    }
+
+    .note {
+      background: white;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      padding: 0.75rem;
+      margin-top: 1rem;
+      word-wrap: break-word;
+    }
+
+    .note file {
+      display: block;
+      margin-top: 0.5rem;
+      font-size: 0.9rem;
+      color: #555;
+    }
+
+    @media (min-width: 768px) {
+      textarea {
+        min-height: 150px;
+      }
+    }
   </style>
 </head>
 <body>
   <div class="container">
-    <h1>📝 My Notes</h1>
-    <textarea id="noteInput" placeholder="Write your note here..."></textarea><br>
-    <input type="file" id="fileInput"><br>
+    <h1>📒 Notes App</h1>
+    <textarea id="noteInput" placeholder="Write your note here..."></textarea>
+    <input type="file" id="fileInput">
     <button onclick="saveNote()">Save Note</button>
-    <h2 style="margin-top:20px; color:#374151;">Your Notes</h2>
     <div id="notesList"></div>
   </div>
 
   <script>
-    let notes = JSON.parse(localStorage.getItem("notes")) || [];
+    const noteInput = document.getElementById("noteInput");
+    const fileInput = document.getElementById("fileInput");
+    const notesList = document.getElementById("notesList");
 
     function saveNote() {
-      const input = document.getElementById("noteInput");
-      const fileInput = document.getElementById("fileInput");
-      const text = input.value.trim();
+      const text = noteInput.value.trim();
+      const file = fileInput.files[0];
 
-      if (!text && !fileInput.files.length) return;
+      if (!text && !file) return;
 
-      let fileData = null;
-      if (fileInput.files.length > 0) {
-        const file = fileInput.files[0];
-        const reader = new FileReader();
-        reader.onload = function(e) {
-          fileData = { name: file.name, type: file.type, data: e.target.result };
-          notes.push({ text, file: fileData });
-          localStorage.setItem("notes", JSON.stringify(notes));
-          input.value = "";
-          fileInput.value = "";
-          displayNotes();
-        };
-        reader.readAsDataURL(file);
-      } else {
-        notes.push({ text, file: null });
-        localStorage.setItem("notes", JSON.stringify(notes));
-        input.value = "";
-        displayNotes();
+      const noteDiv = document.createElement("div");
+      noteDiv.className = "note";
+      if (text) {
+        noteDiv.innerHTML = `<p>${text}</p>`;
       }
-    }
 
-    function deleteNote(index) {
-      notes.splice(index, 1);
-      localStorage.setItem("notes", JSON.stringify(notes));
-      displayNotes();
-    }
-
-    function editNote(index) {
-      const newText = prompt("Edit your note:", notes[index].text);
-      if (newText !== null) {
-        notes[index].text = newText.trim();
-        localStorage.setItem("notes", JSON.stringify(notes));
-        displayNotes();
+      if (file) {
+        const fileURL = URL.createObjectURL(file);
+        const link = document.createElement("a");
+        link.href = fileURL;
+        link.textContent = `📂 ${file.name}`;
+        link.target = "_blank";
+        noteDiv.appendChild(link);
       }
+
+      notesList.prepend(noteDiv);
+
+      // Clear inputs
+      noteInput.value = "";
+      fileInput.value = "";
     }
 
-    function displayNotes() {
-      const notesList = document.getElementById("notesList");
-      notesList.innerHTML = "";
-      notes.forEach((note, index) => {
-        let filePreview = "";
-        if (note.file) {
-          if (note.file.type.startsWith("image/")) {
-            filePreview = `<img src="${note.file.data}" alt="${note.file.name}">`;
-          } else if (note.file.type === "application/pdf") {
-            filePreview = `<iframe src="${note.file.data}"></iframe>`;
-          } else if (note.file.type.startsWith("text/")) {
-            filePreview = `<object data="${note.file.data}" type="${note.file.type}"></object>`;
-          } else {
-            filePreview = `<div class="note-file">📎 <a href="${note.file.data}" download="${note.file.name}">${note.file.name}</a></div>`;
-          }
-        }
-        notesList.innerHTML += `
-          <div class="note">
-            <div class="note-text">${note.text || "(no text)"}</div>
-            ${filePreview}
-            <div class="note-actions">
-              <button onclick="editNote(${index})">Edit</button>
-              <button onclick="deleteNote(${index})">Delete</button>
-            </div>
-          </div>
-        `;
-      });
+    // Register service worker
+    if ("serviceWorker" in navigator) {
+      navigator.serviceWorker.register("service-worker.js")
+        .catch(err => console.error("Service Worker failed:", err));
     }
-
-    displayNotes();
-  // Register service worker for PWA
-if ("serviceWorker" in navigator) {
-  navigator.serviceWorker.register("./service-worker.js")
-    .then(() => console.log("Service Worker registered"))
-    .catch(err => console.log("Service Worker failed:", err));
-}
-
   </script>
 </body>
 </html>
